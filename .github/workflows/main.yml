@@ -1,0 +1,38 @@
+name: Run JMeter Test
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  jmeter-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: Set up Java
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '17'  # Or use 11/8 depending on your JMeter version
+
+    - name: Install JMeter
+      run: |
+        wget https://dlcdn.apache.org//jmeter/binaries/apache-jmeter-5.6.3.tgz
+        tar -xzf apache-jmeter-5.6.3.tgz
+        sudo mv apache-jmeter-5.6.3 /opt/jmeter
+        echo "JMETER_HOME=/opt/jmeter" >> $GITHUB_ENV
+        echo "/opt/jmeter/bin" >> $GITHUB_PATH
+
+    - name: Run JMeter Test
+      run: |
+        jmeter -n -t SampleAPI.jmx -l results.jtl -e -o results
+
+    - name: Upload JMeter Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: jmeter-report
+        path: results
